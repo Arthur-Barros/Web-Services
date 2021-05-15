@@ -1,8 +1,8 @@
-import { createReadStream, existsSync, mkdirSync, unlinkSync, writeFileSync } from 'fs'
+import { createReadStream, createWriteStream, existsSync, mkdirSync, unlinkSync, writeFileSync } from 'fs'
 import { Db,  GridFSBucket, ObjectId } from 'mongodb'
 import {join} from 'path'
 
-
+import * as sharp from 'sharp'
 
 export enum ErroUpload {
     OBJETO_ARQUIVO_INVALIDO = 'Objeto de arquivo inválido',
@@ -33,11 +33,15 @@ export class ArquivoController {
         && 'data' in objArquivo
         && objArquivo['name']
         && objArquivo['data']
+        && objArquivo['mimetype'] === 'image/png'
+        || objArquivo['mimetype'] === 'image/jpg'
+        || objArquivo['mimetype'] === 'image/jpeg'
+       
     }
 
     private _inicilizarBucket(): GridFSBucket {
         return new GridFSBucket(this._bd, {
-            bucketName: 'Arquivos'
+            bucketName: 'arquivos'
         })
     }
 
@@ -58,28 +62,10 @@ export class ArquivoController {
 
                 const streamGridFS = bucket.openUploadStream(nomeArquivo, {
                     metadata: {
-                        mimeType: objArquivo['mimetype']
+                        mimeType: objArquivo['mimetype'] 
                     },
                     
-                    contentType: 'image/jpeg'
                 })
-
-                // if(!nomeArquivo || nomeArquivo.length === 0){
-                //     console.log('não tem arquivo')
-                // }else{
-                //     nomeArquivo.map(nomeArquivo => {
-                //         if (
-                //             nomeArquivo.contentType === 'image/png' 
-                //           ) {
-                //             nomeArquivo.isImage = true;
-                //           } else {
-                //             nomeArquivo.isImage = false;
-                //         }
-                //     })
-                // }
-                    
-                    
-                
 
                 const streamLeitura = createReadStream(caminhoArquivoTemp)
                 streamLeitura
@@ -98,5 +84,81 @@ export class ArquivoController {
             }
         })
     }
+
+
+    realizarDownloadPixel(id: string): Promise<string> {
+        return new Promise(async (resolve, reject) => {
+            if(id && id.length == 24){
+                const _id = new ObjectId(id)
+                const bucket = this._inicilizarBucket()
+                const resultados = await bucket.find({'_id' : _id}).toArray()
+
+                if(resultados.length > 0){
+                    
+                    const metadados = resultados[0]
+                    
+                    const streamGridFS = bucket.openDownloadStream(_id)
+                    const caminhoArquivo = join(this._caminhoDiretorioArquivos, metadados['filename'])
+                    const streamGravacao = createWriteStream(caminhoArquivo)
+                    
+                    const imgReduzida = sharp()
+                        .resize({width: 100})
+
+                    streamGridFS
+                        .pipe(imgReduzida)
+                        .pipe(streamGravacao)
+                        .on('finish', () => {
+                            resolve(caminhoArquivo)
+                        })
+                        .on('erro', erro => {
+                            console.log(erro)
+                            reject(ErroDownload.NAO_FOI_POSSIVEL_GRAVAR)
+                        })
+
+                }else{
+                    reject(ErroDownload.NENHUM_ARQUIVO_ENCONTRADO)
+                }
+
+            }else{
+                reject(ErroDownload.ID_INVALIDO)
+            }
+        })
+    }
+
+    realizarDownload(id: string): Promise<string> {
+        return new Promise(async (resolve, reject) => {
+            if(id && id.length == 24){
+                const _id = new ObjectId(id)
+                const bucket = this._inicilizarBucket()
+                const resultados = await bucket.find({'_id' : _id}).toArray()
+
+                if(resultados.length > 0){
+                    
+                    const metadados = resultados[0]
+                    
+                    const streamGridFS = bucket.openDownloadStream(_id)
+                    const caminhoArquivo = join(this._caminhoDiretorioArquivos, metadados['filename'])
+                    const streamGravacao = createWriteStream(caminhoArquivo)
+                    streamGridFS
+                        .pipe(streamGravacao)
+                        .on('finish', () => {
+                            resolve(caminhoArquivo)
+                        })
+                        .on('erro', erro => {
+                            console.log(erro)
+                            reject(ErroDownload.NAO_FOI_POSSIVEL_GRAVAR)
+                        })
+
+                }else{
+                    reject(ErroDownload.NENHUM_ARQUIVO_ENCONTRADO)
+                }
+
+            }else{
+                reject(ErroDownload.ID_INVALIDO)
+            }
+        })
+    }
+
+
     
 }

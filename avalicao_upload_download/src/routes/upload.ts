@@ -18,9 +18,6 @@ uploadRouter.post('/', async (req,res) => {
         fs.mkdirSync(diretorio)
     }
 
-    
-
-
     const bd = req.app.locals.bd
     const arquivoCtrl = new ArquivoController(bd)
     const idsArquivosSalvos = []
