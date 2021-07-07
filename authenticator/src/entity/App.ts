@@ -1,7 +1,8 @@
-import {Entity, ObjectIdColumn, ObjectID, Column } from "typeorm";
+import {Entity, PrimaryGeneratedColumn, Column } from "typeorm";
 
 export enum STATUSFORAPP {
-    INVALID_SECRET = 'não e possivel cadastrar, pois já existe esse secret em um app',
+    INVALID_SECRETANDID = 'não e possivel cadastrar, pois já existe esse secret em um app e o id',
+    INVALID_SECRET_EMPTY = 'não e possivel cadastrar o scret vazio',
     OK = 'OK',
     INVALID_ID = 'Os ids são iguais',
     NOT_AUTHORIZED = 'User not authorized',
@@ -11,8 +12,8 @@ export enum STATUSFORAPP {
 @Entity()
 export class App {
 
-    @ObjectIdColumn()
-    id: ObjectID;
+    @PrimaryGeneratedColumn()
+    id: number;
 
     @Column({ unique: true})
     id_app: string
@@ -22,7 +23,6 @@ export class App {
 
     @Column()
     expiresIn: string;
-
    
     constructor(id_app: string, secret: string, expiresIn: string){
         this.id_app = id_app
@@ -31,20 +31,9 @@ export class App {
     }
 
     isValid(): STATUSFORAPP {
-    //     if(this.secret === this.secret) {
-    //         return STATUSFORAPP.INVALID_SECRET
-    //     }  
-
-    //    if(this.id_app === this.id_app){
-    //        return STATUSFORAPP.INVALID_ID
-    //    }
-        // if(!this.name || this.name.length == 0){
-        //     return STATUS.INVALID_NAME
-        // }
-
-        // if(!this._isPasswordValid()){
-        //     return STATUS.INVALID_PASSWORD
-        // }
+        if(this.secret === "") {
+            return STATUSFORAPP.INVALID_SECRET_EMPTY
+        }  
 
         return STATUSFORAPP.OK
     }

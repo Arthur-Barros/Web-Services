@@ -1,11 +1,12 @@
 version: '3'
 services:
-    mongo:
-        image: 'mongo:latest'
-        ports:
-            - 27017:27017
+    db:
+        image: 'postgres:latest'
+        environment:
+            POSTGRES_PASSWORD: postgres
+            POSTGRES_USER: postgres
+            POSTGRES_DB: authdb
         volumes:
-            - mongodb_data_container:/data/db
-
-volumes:
-    mongodb_data_container:
+            - ./pgdata:/var/lib/postgresql/data
+        ports:
+            - "5432:5432"

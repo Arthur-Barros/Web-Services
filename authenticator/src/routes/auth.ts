@@ -16,6 +16,12 @@ authRouter.post('/user/register', async (req, res) => {
 
     if(response == STATUS.OK){
         const authCtrl = new AuthController()
+        const userEmail = await authCtrl.findUserByEmail(email)
+        try{
+            email == userEmail.email
+            return res.status(500).json({message: 'email já existe'})
+        } catch(error){
+        }
         try{
             const savedUser = await authCtrl.registerUser(user)
             return res.json(savedUser)
@@ -28,13 +34,27 @@ authRouter.post('/user/register', async (req, res) => {
 })
 
 authRouter.post('/app/register', async (req,res) => {
-    const { id_app, scret, expiresIn} = req.body
+    const { id_app, secret, expiresIn} = req.body
 
-    const app: App = new App(id_app, scret, expiresIn)
+    const app: App = new App(id_app, secret, expiresIn)
     const response =  app.isValid()
-
+    
     if(response == STATUSFORAPP.OK){
         const authCtrl = new AuthController()
+        const secretBD = await authCtrl.findAppBySecreet(secret)
+        const idAppBD = await authCtrl.findAppById(id_app)
+        try{
+            id_app == idAppBD.id_app
+            return res.status(500).json({message: 'id já existe'})
+        } catch(error){
+
+        }
+        try{
+            secret == secretBD.secret
+            return res.status(500).json({message: STATUSFORAPP.INVALID_SECRETANDID})
+        } catch(error){
+
+        }
         try{
             const savedApp = await authCtrl.registerApp(app)
             return res.json(savedApp)
@@ -44,18 +64,13 @@ authRouter.post('/app/register', async (req,res) => {
     }else{
         return res.status(400).json({message: response})
     }
-    // const token = sign(
-    //     {timestamp: new Date()},
-    //     SECRET,
-    //     {
-    //         expiresIn: '5m'
-    //     }
-    // )
-    //     res.json({
-    //         authorized: true,
-    //         token
-    //     })
-   
+})
+
+authRouter.post('/app/associate', async (req,res) => {
+    const { email, id_app} = req.body
+    
+    const authCtrl = new AuthController()
+    authCtrl.associateUserToApp(id_app, email)
 })
 
 authRouter.post('/user/login', async (req, res) => {

@@ -1,23 +1,18 @@
 import { NextFunction, Request, Response } from "express"
-import { getMongoManager, MongoEntityManager } from "typeorm"
+import { getManager } from "typeorm"
 import { verify } from 'jsonwebtoken'
 
 import { STATUS, User } from "../entity/User"
-import { STATUSFORAPP, App } from "../entity/App"
+import { App } from "../entity/App"
 import { SECRET } from "../config/secret"
+
 
 export class AuthController {
     
-    entityManager: MongoEntityManager
-
-    constructor() {
-        this.entityManager = getMongoManager()
-    }
-
-    async registerUser(user: User): Promise<User> {
+    async registerUser(user: User){
         delete user._password
         try {        
-            const savedUser = await this.entityManager.save(user)
+            const savedUser = await getManager().save(user)
             return savedUser
         } catch(error){
             console.log(error)
@@ -25,8 +20,20 @@ export class AuthController {
         }    
     }
 
+    async findAppById(id_app: string): Promise<App> {
+        const app = await getManager().findOne(App, { id_app: id_app })
+        return app
+    }
+
+    async associateUserToApp(id_app: string, email: string) {
+       const userEmail = await getManager().find(User, {email: email})
+       const appId = await getManager().find(App, {id_app: id_app})
+
+      return {userEmail, appId}
+    }
+
     async findUserByEmail(email: string): Promise<User> {
-        const user = await this.entityManager.findOne(User, { email: email})
+        const user = await getManager().findOne(User, { email: email})
         return user
     }
 
@@ -46,15 +53,18 @@ export class AuthController {
 
     }
 
-    // controller do App
-
     async registerApp(app: App): Promise<App> {
         try{
-            const savedApp = await this.entityManager.save(app)
+            const savedApp = await getManager().save(app)
             return savedApp
         } catch(error){
             console.log(error)
             throw new Error(error)
         }
+    }
+
+    async findAppBySecreet(secret: string): Promise<App> {
+        const app = await getManager().findOne(App, {secret: secret})
+        return app
     }
 }

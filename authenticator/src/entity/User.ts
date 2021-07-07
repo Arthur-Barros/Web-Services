@@ -1,4 +1,4 @@
-import {Entity, ObjectIdColumn, ObjectID, Column } from "typeorm";
+import {Entity, PrimaryGeneratedColumn, Column } from "typeorm";
 import { randomBytes, pbkdf2Sync} from 'crypto'
 import { validate } from 'email-validator'
 
@@ -15,8 +15,8 @@ export enum STATUS {
 @Entity()
 export class User {
 
-    @ObjectIdColumn()
-    id: ObjectID;
+    @PrimaryGeneratedColumn()
+    id: number;
 
     @Column({ unique: true})
     email: string;
@@ -31,6 +31,7 @@ export class User {
     hash: string;
 
     _password: string
+
 
     constructor(email: string, name: string, password: string){
         this.email = email
