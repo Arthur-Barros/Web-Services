@@ -5,6 +5,7 @@ import { AuthController } from '../controller/AuthController'
 import { STATUS, User } from '../entity/User'
 import { STATUSFORAPP, App } from '../entity/App'
 import { SECRET } from '../config/secret'
+import { AppToUser } from '../entity/AppToUser'
 
 export const authRouter = Router()
 
@@ -70,7 +71,29 @@ authRouter.post('/app/associate', async (req,res) => {
     const { email, id_app} = req.body
     
     const authCtrl = new AuthController()
-    authCtrl.associateUserToApp(id_app, email)
+    const recuperaEmail = await authCtrl.findUserByEmail(email)
+
+    if(!recuperaEmail){
+        return res.status(500).json({message: 'e-mail de usuário não está cadastrado'})
+    }
+    const recuperaIdapp = await authCtrl.findAppById(id_app)
+   
+    const appTouser = new AppToUser()
+    appTouser.email = recuperaEmail.email,
+   
+    appTouser.id_app = recuperaIdapp.id_app
+
+    if(await authCtrl.findUserByEmailToApp(appTouser.email)){
+        return res.status(500).json({message: 'você já está cadastrado nesse app'})
+    }
+       
+    try{
+        const savedApptoUser = await authCtrl.associateUserToApp(appTouser)
+        return res.json(savedApptoUser)
+    }catch(error){
+        return res.status(500).json({message: 'não foi possivel associar'})
+    }
+
 })
 
 authRouter.post('/user/login', async (req, res) => {

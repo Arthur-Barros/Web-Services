@@ -1,6 +1,7 @@
-import {Entity, PrimaryGeneratedColumn, Column } from "typeorm";
+import {Entity, PrimaryGeneratedColumn, Column, OneToMany } from "typeorm";
 import { randomBytes, pbkdf2Sync} from 'crypto'
 import { validate } from 'email-validator'
+import { AppToUser } from "./AppToUser";
 
 export enum STATUS {
     INVALID_EMAIL = 'Invalid e-mail',
@@ -32,6 +33,8 @@ export class User {
 
     _password: string
 
+    @OneToMany(() => AppToUser, appTouser => appTouser.user)
+    public appToUsers!: AppToUser[];
 
     constructor(email: string, name: string, password: string){
         this.email = email

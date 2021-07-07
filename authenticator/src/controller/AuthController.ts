@@ -5,6 +5,7 @@ import { verify } from 'jsonwebtoken'
 import { STATUS, User } from "../entity/User"
 import { App } from "../entity/App"
 import { SECRET } from "../config/secret"
+import { AppToUser } from "../entity/AppToUser"
 
 
 export class AuthController {
@@ -25,16 +26,19 @@ export class AuthController {
         return app
     }
 
-    async associateUserToApp(id_app: string, email: string) {
-       const userEmail = await getManager().find(User, {email: email})
-       const appId = await getManager().find(App, {id_app: id_app})
-
-      return {userEmail, appId}
-    }
-
     async findUserByEmail(email: string): Promise<User> {
         const user = await getManager().findOne(User, { email: email})
         return user
+    }
+
+    async findUserByEmailToApp(email: string): Promise<AppToUser>{
+        const appToUser = await getManager().findOne(AppToUser, { email: email })
+        return appToUser
+    }
+
+    async associateUserToApp(apptoUser) {
+        const appToUser =  await getManager().save(apptoUser)
+        return appToUser
     }
 
     static verifyToken(req: Request, res: Response, next: NextFunction) {

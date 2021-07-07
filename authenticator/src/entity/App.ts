@@ -1,4 +1,6 @@
-import {Entity, PrimaryGeneratedColumn, Column } from "typeorm";
+import {Entity, PrimaryGeneratedColumn, Column, ManyToMany, JoinTable, OneToMany } from "typeorm";
+import { AppToUser } from "./AppToUser";
+
 
 export enum STATUSFORAPP {
     INVALID_SECRETANDID = 'não e possivel cadastrar, pois já existe esse secret em um app e o id',
@@ -23,7 +25,10 @@ export class App {
 
     @Column()
     expiresIn: string;
-   
+
+    @OneToMany(() => AppToUser, appTouser => appTouser.app)
+    public appToUsers!: AppToUser[];
+
     constructor(id_app: string, secret: string, expiresIn: string){
         this.id_app = id_app
         this.secret = secret
