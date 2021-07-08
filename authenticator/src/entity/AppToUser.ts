@@ -7,14 +7,11 @@ export class AppToUser {
     @PrimaryGeneratedColumn()
     public apptoUserId!: number;
 
-    @Column({ unique: true})
+    @Column()
     public email!: string;
 
     @Column()
     public id_app!: string;
-
-    // @Column()
-    // public order!: number;
 
     @ManyToOne(() => User, user => user.appToUsers)
     public user!: User;

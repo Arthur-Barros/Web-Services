@@ -5,12 +5,15 @@ import { AppToUser } from "./AppToUser";
 
 export enum STATUS {
     INVALID_EMAIL = 'Invalid e-mail',
-    INVALID_EMAILL = 'DEU CERTO A VALIDAÇÃO',
     INVALID_NAME = 'Invalid name',
     INVALID_PASSWORD = 'The password must contain at least 8 characters, 1 uppercase character, and 1 digit',
     OK = 'OK',
     REGISTER_ERROR = 'An error occurred while trying to register the user',
-    NOT_AUTHORIZED = 'User not authorized'
+    NOT_AUTHORIZED = 'User not authorized',
+    EMAIL_EXISTING = 'E-mail already exists',
+    REGISTERED_EMAIL = 'User email is not registered',
+    EMAIL_REGISTERED_FOR_APP = 'You are already registered for this app',
+    ASSOCIATE_FAIL = 'It was not possible to associate'
 }
 
 @Entity()

@@ -31,8 +31,13 @@ export class AuthController {
         return user
     }
 
-    async findUserByEmailToApp(email: string): Promise<AppToUser>{
-        const appToUser = await getManager().findOne(AppToUser, { email: email })
+    async findUserByEmailToApp(email: string){
+        const appToUser = await getManager().find(AppToUser, { email: email })
+        return appToUser
+    }
+
+    async findUserByIdToApp(id_app: string): Promise<AppToUser>{
+        const appToUser = await getManager().findOne(AppToUser, { id_app: id_app })
         return appToUser
     }
 

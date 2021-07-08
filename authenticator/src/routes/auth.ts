@@ -20,7 +20,7 @@ authRouter.post('/user/register', async (req, res) => {
         const userEmail = await authCtrl.findUserByEmail(email)
         try{
             email == userEmail.email
-            return res.status(500).json({message: 'email já existe'})
+            return res.status(400).json({message: STATUS.EMAIL_EXISTING})
         } catch(error){
         }
         try{
@@ -46,13 +46,13 @@ authRouter.post('/app/register', async (req,res) => {
         const idAppBD = await authCtrl.findAppById(id_app)
         try{
             id_app == idAppBD.id_app
-            return res.status(500).json({message: 'id já existe'})
+            return res.status(400).json({message: STATUSFORAPP.ID_EXISTING})
         } catch(error){
 
         }
         try{
             secret == secretBD.secret
-            return res.status(500).json({message: STATUSFORAPP.INVALID_SECRETANDID})
+            return res.status(400).json({message: STATUSFORAPP.INVALID_SECRETANDID})
         } catch(error){
 
         }
@@ -74,53 +74,91 @@ authRouter.post('/app/associate', async (req,res) => {
     const recuperaEmail = await authCtrl.findUserByEmail(email)
 
     if(!recuperaEmail){
-        return res.status(500).json({message: 'e-mail de usuário não está cadastrado'})
+        return res.status(400).json({message: STATUS.REGISTERED_EMAIL})
     }
+
     const recuperaIdapp = await authCtrl.findAppById(id_app)
-   
+
+    if(!recuperaIdapp){
+        return res.status(400).json({message: STATUSFORAPP.ID_NOTVALID})
+    }
+
     const appTouser = new AppToUser()
     appTouser.email = recuperaEmail.email,
    
     appTouser.id_app = recuperaIdapp.id_app
 
-    if(await authCtrl.findUserByEmailToApp(appTouser.email)){
-        return res.status(500).json({message: 'você já está cadastrado nesse app'})
+    const recuperaEmaildoApp = await authCtrl.findUserByEmailToApp(appTouser.email)
+    const retorno = recuperaEmaildoApp.find((item) => item.id_app === id_app)
+    if(retorno){
+        return res.status(400).json({message: STATUS.EMAIL_REGISTERED_FOR_APP})
     }
        
     try{
         const savedApptoUser = await authCtrl.associateUserToApp(appTouser)
         return res.json(savedApptoUser)
     }catch(error){
-        return res.status(500).json({message: 'não foi possivel associar'})
+        return res.status(500).json({message: STATUS.ASSOCIATE_FAIL})
     }
 
 })
 
 authRouter.post('/user/login', async (req, res) => {
-    const { email, password } = req.body
+    const { email, password, id_app} = req.body
 
     const authCtrl = new AuthController()
+
+
+    const recuperaIdapp = await authCtrl.findAppById(id_app);
+
+    if(!recuperaIdapp && id_app){
+        return res.status(400).json({message: STATUSFORAPP.ID_NOTVALID})
+    }
+
     const user = await authCtrl.findUserByEmail(email)
+
+    if(!user){
+        return res.status(400).json({message: STATUS.INVALID_EMAIL})
+    }
+
+    if(user && user.isPasswordCorrect(password) && recuperaIdapp){
+        const token = sign(
+            { user: email, timestamp: new Date()},
+            recuperaIdapp.secret,
+            {
+                expiresIn: recuperaIdapp.expiresIn
+            }
+        )
+        res.json({
+            authorized: true,
+            secretApp: recuperaIdapp.secret,
+            user,
+            token,
+        })
+    } 
+    
     if(user && user.isPasswordCorrect(password)){
         const token = sign(
             { user: email, timestamp: new Date()},
-            SECRET,
+                SECRET,
             {
-                expiresIn: '5m'
+                expiresIn: "5m"
             }
         )
-
         res.json({
             authorized: true,
+            SECRET,
             user,
             token
         })
-    } else{
+    }  else{
         return res.status(401).json({
             authorized: false,
             message: STATUS.NOT_AUTHORIZED
         })
     }
+
+  
 })
 
 authRouter.get('/arthur_secret', AuthController.verifyToken, (req, res) => {
